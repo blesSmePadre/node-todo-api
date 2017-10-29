@@ -36,20 +36,26 @@ const UserSchema = new mongoose.Schema({
 UserSchema.methods.generateAuthToken = function() {
   try {
     const user = this;
-    const access = 'auth';
-    const token = jwt.sign({
-      _id: user._id.toHexString(),
-      access
-    }, 'valarmorgulis').toString();
+    const token = user.tokens.find(token => token.access === 'auth');
 
-    user.tokens.push({
-      access,
-      token
-    });
+    if (!token) {
+      const access = 'auth';
+      const token = jwt.sign({
+        _id: user._id.toHexString(),
+        access
+      }, 'valarmorgulis').toString();
 
-    return user.save().then(() => {
-      return token;
-    });
+      user.tokens.push({
+        access,
+        token
+      });
+
+      return user.save().then(() => {
+        return token;
+      });
+    } else {
+      return Promise.resolve(token.token);
+    }
   }
   catch(e) {
     console.log(e);
@@ -83,7 +89,7 @@ UserSchema.statics.findByCredentials = function(email, password) {
   return User.findOne({email})
     .then(user => {
       if (!user) {
-        return Promise.reject();
+        return Promise.reject(new Error('no user'));
       }
 
       return new Promise((resolve, reject) => {
