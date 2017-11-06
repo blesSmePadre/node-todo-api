@@ -43,7 +43,7 @@ UserSchema.methods.generateAuthToken = function() {
       const token = jwt.sign({
         _id: user._id.toHexString(),
         access
-      }, 'valarmorgulis').toString();
+      }, process.env.JWT_SECRET).toString();
 
       user.tokens.push({
         access,
@@ -83,7 +83,7 @@ UserSchema.methods.removeToken = function(token) {
 UserSchema.statics.findByToken = function(token) {
   const User = this;
   try {
-    const decodedToken = jwt.verify(token, 'valarmorgulis');
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
     return User.findOne({
       '_id': decodedToken._id,
       'tokens.token': token,
